@@ -1,0 +1,39 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: nfs-client-provisioner-rabbitmq
+  namespace: rabbitmq
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nfs-client-provisioner
+  template:
+    metadata:
+      labels:
+        app: nfs-client-provisioner
+    spec:
+      #serviceAccount: nfs-provisioner-rabbitmq
+      serviceAccount: nfs-client-provisioner
+      containers:
+        - name: nfs-client-provisioner
+          image: registry.cn-hangzhou.aliyuncs.com/open-ali/nfs-client-provisioner
+          volumeMounts:
+            - name: nfs-client-root
+              mountPath: /persistentvolumes
+          env:
+            - name: PROVISIONER_NAME
+              value: kubernetes.io/rabbitmq
+            - name: NFS_SERVER
+              value: 10.0.0.53
+            - name: NFS_PATH
+              value: /data1/rabbitmq
+      volumes:
+        - name: nfs-client-root
+          nfs:
+            server: 10.0.0.53
+            path: /data1/rabbitmq
+      nodeSelector:
+        role: "app"
